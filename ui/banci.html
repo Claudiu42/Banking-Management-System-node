@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="banci.html">Banci</a>
+        <a href="clienti.html">Clienti</a>
+        <a href="conturi_bancare.html">Conturi Bancare</a>
+    </nav>
+    <div class="container">
+        <h1>Bank Manager</h1>
+
+        <div>
+            <h3>Create Bank</h3>
+            <input type="text" id="name" placeholder="Name" class="form-control">
+            <input type="text" id="address" placeholder="Address" class="form-control">
+            <input type="text" id="phone" placeholder="Phone" class="form-control">
+            <input type="text" id="type" placeholder="Type" class="form-control">
+            <button onclick="createBank()" class="btn btn-primary">Add Bank</button>
+        </div>
+
+        <div id="dataContainer"></div>
+
+        <div class="modal" id="editModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Bank</h5>
+                    <button class="btn-close" onclick="hideEditModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-id">
+                    <input type="text" id="edit-name" placeholder="Name" class="form-control">
+                    <input type="text" id="edit-address" placeholder="Address" class="form-control">
+                    <input type="text" id="edit-phone" placeholder="Phone" class="form-control">
+                    <input type="text" id="edit-type" placeholder="Type" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button onclick="hideEditModal()" class="btn btn-secondary">Close</button>
+                    <button onclick="updateBank()" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = 'http://127.0.0.1:3000/banci';
+
+        function fetchBanks() {
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('dataContainer');
+                    container.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Address</th>
+                                    <th>Phone</th>
+                                    <th>Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.map(bank => `
+                                    <tr>
+                                        <td>${bank.idbanca}</td>
+                                        <td>${bank.nume}</td>
+                                        <td>${bank.adresa}</td>
+                                        <td>${bank.telefon}</td>
+                                        <td>${bank.tip_banca}</td>
+                                        <td>
+                                            <button onclick="showEditModal(${bank.idbanca}, '${bank.nume}', '${bank.adresa}', '${bank.telefon}', '${bank.tip_banca}')" class="btn btn-warning">Edit</button>
+                                            <button onclick="deleteBank(${bank.idbanca})" class="btn btn-danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                });
+        }
+
+        function createBank() {
+            const name = document.getElementById('name').value;
+            const address = document.getElementById('address').value;
+            const phone = document.getElementById('phone').value;
+            const type = document.getElementById('type').value;
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nume: name, adresa: address, telefon: phone, tip_banca: type })
+            }).then(() => fetchBanks());
+        }
+
+        function deleteBank(id) {
+            fetch(`${apiUrl}/${id}`, { method: 'DELETE' })
+                .then(() => fetchBanks());
+        }
+
+        function showEditModal(id, name, address, phone, type) {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-name').value = name;
+            document.getElementById('edit-address').value = address;
+            document.getElementById('edit-phone').value = phone;
+            document.getElementById('edit-type').value = type;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function hideEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function updateBank() {
+            const id = document.getElementById('edit-id').value;
+            const name = document.getElementById('edit-name').value;
+            const address = document.getElementById('edit-address').value;
+            const phone = document.getElementById('edit-phone').value;
+            const type = document.getElementById('edit-type').value;
+
+            fetch(`${apiUrl}/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nume: name, adresa: address, telefon: phone, tip_banca: type })
+            }).then(() => {
+                hideEditModal();
+                fetchBanks();
+            });
+        }
+
+        fetchBanks();
+    </script>
+</body>
+</html>

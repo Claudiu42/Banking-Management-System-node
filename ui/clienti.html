@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav>
+        <a href="banci.html">Banci</a>
+        <a href="clienti.html">Clienti</a>
+        <a href="conturi_bancare.html">Conturi Bancare</a>
+    </nav>
+    <div class="container">
+        <h1>Client Manager</h1>
+
+        <div>
+            <h3>Create Client</h3>
+            <input type="text" id="nume" placeholder="Nume" class="form-control">
+            <input type="text" id="prenume" placeholder="Prenume" class="form-control">
+            <input type="text" id="adresa" placeholder="Address" class="form-control">
+            <input type="text" id="telefon" placeholder="Phone" class="form-control">
+            <input type="text" id="tip_client" placeholder="Client Type" class="form-control">
+            <button onclick="createClient()" class="btn btn-primary">Add Client</button>
+        </div>
+
+        <div id="dataContainer"></div>
+
+        <div class="modal" id="editModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Client</h5>
+                    <button class="btn-close" onclick="hideEditModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="edit-idclient">
+                    <input type="text" id="edit-nume" placeholder="Nume" class="form-control">
+                    <input type="text" id="edit-prenume" placeholder="Prenume" class="form-control">
+                    <input type="text" id="edit-adresa" placeholder="Address" class="form-control">
+                    <input type="text" id="edit-telefon" placeholder="Phone" class="form-control">
+                    <input type="text" id="edit-tip_client" placeholder="Client Type" class="form-control">
+                </div>
+                <div class="modal-footer">
+                    <button onclick="hideEditModal()" class="btn btn-secondary">Close</button>
+                    <button onclick="updateClient()" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = 'http://127.0.0.1:3000/clienti'; // Updated to the new API URL
+
+        function fetchClients() {
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('dataContainer');
+                    container.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Surname</th>
+                                    <th>Address</th>
+                                    <th>Phone</th>
+                                    <th>Client Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.map(client => `
+                                    <tr>
+                                        <td>${client.idclient}</td>
+                                        <td>${client.nume}</td>
+                                        <td>${client.prenume}</td>
+                                        <td>${client.adresa}</td>
+                                        <td>${client.telefon}</td>
+                                        <td>${client.tip_client}</td>
+                                        <td>
+                                            <button onclick="showEditModal(${client.idclient}, '${client.nume}', '${client.prenume}', '${client.adresa}', '${client.telefon}', '${client.tip_client}')" class="btn btn-warning">Edit</button>
+                                            <button onclick="deleteClient(${client.idclient})" class="btn btn-danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                });
+        }
+
+        function createClient() {
+            const nume = document.getElementById('nume').value;
+            const prenume = document.getElementById('prenume').value;
+            const adresa = document.getElementById('adresa').value;
+            const telefon = document.getElementById('telefon').value;
+            const tip_client = document.getElementById('tip_client').value;
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nume, prenume, adresa, telefon, tip_client })
+            }).then(() => fetchClients());
+        }
+
+        function deleteClient(id) {
+            fetch(`${apiUrl}/${id}`, { method: 'DELETE' })
+                .then(() => fetchClients());
+        }
+
+        function showEditModal(id, nume, prenume, adresa, telefon, tip_client) {
+            document.getElementById('edit-idclient').value = id;
+            document.getElementById('edit-nume').value = nume;
+            document.getElementById('edit-prenume').value = prenume;
+            document.getElementById('edit-adresa').value = adresa;
+            document.getElementById('edit-telefon').value = telefon;
+            document.getElementById('edit-tip_client').value = tip_client;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function hideEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        function updateClient() {
+            const id = document.getElementById('edit-idclient').value;
+            const nume = document.getElementById('edit-nume').value;
+            const prenume = document.getElementById('edit-prenume').value;
+            const adresa = document.getElementById('edit-adresa').value;
+            const telefon = document.getElementById('edit-telefon').value;
+            const tip_client = document.getElementById('edit-tip_client').value;
+
+            fetch(`${apiUrl}/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nume, prenume, adresa, telefon, tip_client })
+            }).then(() => {
+                hideEditModal();
+                fetchClients();
+            });
+        }
+
+        fetchClients(); // Fetch client data when the page loads
+    </script>
+</body>
+</html>
